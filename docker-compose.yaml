@@ -1,0 +1,37 @@
+version: "3.8"
+services:
+  raft-test-envoy:
+    image: envoyproxy/envoy-alpine:v1.19-latest
+    container_name: raft-test-envoy
+    volumes:
+      - ./envoy:/etc/envoy
+      - ./ssl:/ssl
+    networks:
+      - raft-test-net
+      - envoy-net
+    environment:
+      TZ: Asia/Tokyo
+    ports:
+      - 8443
+  raft-test-dev:
+    build: .devcontainer
+    tty: true
+    container_name: raft-test-dev
+    volumes:
+      - .:/src/:delegated
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh
+      - ~/.gitconfig:/root/.gitconfig
+    environment:
+      TZ: Asia/Tokyo
+    networks:
+      - raft-test-net
+networks:
+  default:
+    name: bridge
+  raft-test-net:
+    name: raft-test-net
+    driver: bridge
+  envoy-net:
+    name: envoy-net
+    driver: bridge
