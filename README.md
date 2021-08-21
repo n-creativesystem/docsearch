@@ -14,5 +14,14 @@ APIで公開されているエンドポイントからユーザー辞書を登�
 
 ## Architecture
 
-- client(http) -> grpc_gateway -> grpc_server -> grpc_service -> raft_server -> raft -> storage -> bluge
-- client(grpc) -> grpc_server -> grpc_service -> raft_server -> raft -> storage -> bluge
+```
++------+   +--------------+
+|      |   |              |
+| http +---> grpc-gateway +---+   +-------------+   +-------------+   +---------+   +-------+
+|      |   |              |   |   |             |   |             |   |         |   |       |
+|------|   +--------------+   +---> grpc-server +---> raft-server ----> storage ----> bluge |
+|      |                      |   |             |   |             |   |         |   |       |
+| grpc +----------------------+   +-------------+   +-------------+   +---------+   +-------+
+|      |
++------+
+```

@@ -19,6 +19,7 @@ func New(path string) (*raftbadgerdb.BadgerStore, error) {
 	storeOpts := raftbadgerdb.Options{
 		Path:          path,
 		BadgerOptions: &badgerOpts,
+		ValueLogGC:    true,
 	}
 	store, err := raftbadgerdb.New(storeOpts)
 	if err != nil {

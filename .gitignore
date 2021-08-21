@@ -19,3 +19,4 @@ docsearch
 /bin
 /.VSCodeCounter
 /main_test.go
+.DS_Store
