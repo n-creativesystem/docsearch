@@ -8,6 +8,10 @@
 
 APIで公開されているエンドポイントからユーザー辞書を登録して頂くことも可能です。
 
+## API
+
+[OpenAPI2(swagger)](./protobuf/docsearch.swagger.json)でご確認下さい。
+
 ## Architecture
 
 - client(http) -> grpc_gateway -> grpc_server -> grpc_service -> raft_server -> raft -> storage -> bluge
