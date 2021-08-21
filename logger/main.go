@@ -1,116 +1,61 @@
 package logger
 
 import (
-	"fmt"
-	"strings"
-	"time"
+	"io"
 
-	"github.com/n-creativesystem/docsearch/utils"
-
-	"github.com/gin-gonic/gin"
+	"github.com/hashicorp/go-hclog"
 	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
-const (
-	TimestampFormat = "2006/01/02 - 15:04:05"
-)
+type DefaultLogger interface {
+	Tracef(format string, args ...interface{})
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Printf(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalf(format string, args ...interface{})
+	Panicf(format string, args ...interface{})
 
-var (
-	format = strings.ToLower(utils.DefaultGetEnv("LOG_FORMAT_TYPE", "JSON"))
-)
+	Trace(args ...interface{})
+	Debug(args ...interface{})
+	Info(args ...interface{})
+	Print(args ...interface{})
+	Warn(args ...interface{})
+	Warning(args ...interface{})
+	Error(args ...interface{})
+	Fatal(args ...interface{})
+	Panic(args ...interface{})
 
-func New() *logrus.Logger {
-	log := logrus.New()
-	SetFormatter(log)
-	return log
+	Traceln(args ...interface{})
+	Debugln(args ...interface{})
+	Infoln(args ...interface{})
+	Println(args ...interface{})
+	Warnln(args ...interface{})
+	Warningln(args ...interface{})
+	Errorln(args ...interface{})
+	Fatalln(args ...interface{})
+	Panicln(args ...interface{})
 }
 
-func SetFormatter(log *logrus.Logger) {
-	var formatter logrus.Formatter = GetFormatter()
-	log.SetFormatter(formatter)
+type LogrusLogger interface {
+	WriteLogger
+	Logrus() *logrus.Logger
 }
 
-func GetFormat() string {
-	return format
+type ZapLogger interface {
+	WriteLogger
+	Zap() *zap.Logger
 }
 
-func GetFormatter() logrus.Formatter {
-	switch GetFormat() {
-	case "text":
-		return &logrus.TextFormatter{
-			TimestampFormat: TimestampFormat,
-		}
-	default:
-		return &logrus.JSONFormatter{
-			TimestampFormat: TimestampFormat,
-		}
-	}
+type WriteLogger interface {
+	io.Writer
+	DefaultLogger
 }
 
-func RestLogger(logger *logrus.Logger) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
-		path := c.Request.URL.Path
-		raw := c.Request.URL.RawQuery
-		fields := logrus.Fields{}
-		if logger.GetLevel() == logrus.DebugLevel {
-			mpHeader := c.Request.Header.Clone()
-			for key, value := range mpHeader {
-				if len(value) >= 0 {
-					key = strings.ToLower(key)
-					k := fmt.Sprintf("req_%s", key)
-					v := strings.ToLower(strings.Join(value, ", "))
-					fields[k] = v
-				}
-			}
-		}
-		c.Next()
-		for i, err := range c.Errors {
-			logger.Errorf("idx: %d error: %v", i, err)
-		}
-		param := gin.LogFormatterParams{
-			Request: c.Request,
-			Keys:    c.Keys,
-		}
-
-		param.TimeStamp = time.Now()
-		param.Latency = param.TimeStamp.Sub(start)
-
-		param.ClientIP = c.ClientIP()
-		param.Method = c.Request.Method
-		param.StatusCode = c.Writer.Status()
-		param.ErrorMessage = c.Errors.ByType(gin.ErrorTypePrivate).String()
-
-		param.BodySize = c.Writer.Size()
-
-		if raw != "" {
-			path = path + "?" + raw
-		}
-
-		param.Path = path
-		mp := map[string]interface{}{
-			"key":      "RBNS",
-			"status":   param.StatusCode,
-			"latency":  param.Latency,
-			"clientIP": param.ClientIP,
-			"method":   param.Method,
-			"path":     param.Path,
-			"Ua":       param.Request.UserAgent(),
-		}
-		for key, value := range mp {
-			fields[key] = value
-		}
-		if logger.GetLevel() == logrus.DebugLevel {
-			mpHeader := c.Writer.Header().Clone()
-			for key, value := range mpHeader {
-				if len(value) >= 0 {
-					key = strings.ToLower(key)
-					k := fmt.Sprintf("res_%s", key)
-					v := strings.ToLower(strings.Join(value, ", "))
-					fields[k] = v
-				}
-			}
-		}
-		logger.WithFields(fields).Info("incoming request")
-	}
+type HclogAdapter interface {
+	io.Writer
+	hclog.Logger
 }

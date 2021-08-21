@@ -2,94 +2,157 @@ package storage
 
 import (
 	"context"
+	"log"
+	"math"
 
 	"github.com/blugelabs/bluge"
 	"github.com/blugelabs/bluge/index"
-	"github.com/sirupsen/logrus"
+	"github.com/blugelabs/bluge/search"
+	"github.com/n-creativesystem/docsearch/logger"
 )
 
-type Index struct {
-	writer *bluge.Writer
-	logger *logrus.Logger
+type Index interface {
+	Close() error
+	Search(request *bluge.TopNSearch) (*SearchResponse, error)
+	Update(documents []*bluge.Document) error
+	Delete(id string) error
+	BulkDelete(ids []string) error
+	Snapshot(path string, cancel chan struct{}) error
 }
 
-func New(directory string, logger *logrus.Logger) (*Index, error) {
-	config := bluge.DefaultConfig(directory)
-	// conf := index.DefaultConfig(directory)
+type store struct {
+	config bluge.Config
+	writer *bluge.Writer
+	logger logger.DefaultLogger
+}
 
+func New(directory string, logger logger.WriteLogger) (Index, error) {
+	config := bluge.DefaultConfig(directory)
+	config.Logger = log.New(logger, "bluge", log.LstdFlags)
 	writer, err := bluge.OpenWriter(config)
 	if err != nil {
 		return nil, err
 	}
-	return &Index{
+	return &store{
+		config: config,
 		writer: writer,
 		logger: logger,
 	}, nil
 }
 
-func (i *Index) Close() error {
-	return i.writer.Close()
+func (s *store) Close() error {
+	return s.writer.Close()
 }
 
-func (i *Index) reader(f func(reader *bluge.Reader) error) error {
-	reader, err := i.writer.Reader()
+func (s *store) reader(f func(reader *bluge.Reader) error) error {
+	reader, err := bluge.OpenReader(s.config)
 	if err != nil {
-		i.logger.Errorf("reader error: %s", err.Error())
+		s.logger.Errorf("reader error: %s", err.Error())
 		return err
 	}
 	defer reader.Close()
 	return f(reader)
 }
 
-func (i *Index) Search(request bluge.SearchRequest) ([]string, error) {
-	ids := []string{}
-	err := i.reader(func(reader *bluge.Reader) error {
-		cnt, _ := reader.Count()
-		i.logger.Infof("count: %d", cnt)
-		fields, _ := reader.Fields()
-		i.logger.Infof("fields: %v", fields)
+type SearchResponse struct {
+	Metadata  Metadata         `json:"metadata"`
+	Documents []*DocumentMatch `json:"documents"`
+}
+
+type Metadata struct {
+	NextPage     int64   `json:"next_page,omitempty"`
+	PreviousPage int64   `json:"previous_page,omitempty"`
+	TopScore     float64 `json:"top_score"`
+	Total        uint64  `json:"total"`
+}
+
+func (m *Metadata) CalcPage(searchSize int, nowPage int64) {
+	numPages := int64(math.Ceil(float64(m.Total) / float64(searchSize)))
+	if numPages > nowPage {
+		m.NextPage = nowPage + 1
+	}
+	if nowPage != 1 {
+		m.PreviousPage = nowPage - 1
+	}
+}
+
+type DocumentMatch struct {
+	Document interface{}         `json:"document"`
+	Score    float64             `json:"score"`
+	Expl     *search.Explanation `json:"explanation"`
+	ID       string              `json:"id"`
+}
+
+func (s *store) Search(request *bluge.TopNSearch) (*SearchResponse, error) {
+	resp := &SearchResponse{
+		Metadata:  Metadata{},
+		Documents: []*DocumentMatch{},
+	}
+	err := s.reader(func(reader *bluge.Reader) error {
+		var documentMatchs []*DocumentMatch
 		documentMatchIterator, err := reader.Search(context.Background(), request)
 		if err != nil {
 			return err
 		}
-		match, err := documentMatchIterator.Next()
-		for err == nil && match != nil {
-			err = match.VisitStoredFields(func(field string, value []byte) bool {
+		next, err := documentMatchIterator.Next()
+		for err == nil && next != nil {
+			var doc DocumentMatch
+			mp := map[string]interface{}{}
+			err = next.VisitStoredFields(func(field string, value []byte) bool {
 				if field == "_id" {
-					ids = append(ids, string(value))
-					i.logger.Infof("match: %s", string(value))
+					doc.ID = string(value)
+				} else {
+					mp[field] = string(value)
 				}
 				return true
 			})
 			if err != nil {
-				i.logger.Errorf("document request error: %s", err.Error())
+				s.logger.Errorf("document request error: %s", err.Error())
 				return err
 			}
-			match, err = documentMatchIterator.Next()
+			doc.Document = mp
+			doc.Score = next.Score
+			doc.Expl = next.Explanation
+			documentMatchs = append(documentMatchs, &doc)
+			next, err = documentMatchIterator.Next()
+			documentMatchIterator.Aggregations()
 		}
+		aggs := documentMatchIterator.Aggregations()
+		count := aggs.Count()
+		topScore := aggs.Metric("max_score")
+		resp.Metadata.TopScore = topScore
+		resp.Metadata.Total = count
+		resp.Documents = make([]*DocumentMatch, len(documentMatchs))
+		copy(resp.Documents, documentMatchs)
 		return nil
 	})
-	return ids, err
+	return resp, err
 }
 
-func (i *Index) Update(documents []*bluge.Document) error {
+func (s *store) Update(documents []*bluge.Document) error {
 	batch := index.NewBatch()
 	for _, doc := range documents {
 		doc := doc
 		batch.Update(doc.ID(), doc)
 	}
-	return i.writer.Batch(batch)
+	return s.writer.Batch(batch)
 }
 
-func (i *Index) Delete(id string) error {
-	return i.BulkDelete([]string{id})
+func (s *store) Delete(id string) error {
+	return s.BulkDelete([]string{id})
 }
 
-func (i *Index) BulkDelete(ids []string) error {
+func (s *store) BulkDelete(ids []string) error {
 	batch := index.NewBatch()
 	for _, id := range ids {
 		id := id
 		batch.Delete(bluge.Identifier(id))
 	}
-	return i.writer.Batch(batch)
+	return s.writer.Batch(batch)
+}
+
+func (s *store) Snapshot(path string, cancel chan struct{}) error {
+	return s.reader(func(reader *bluge.Reader) error {
+		return reader.Backup(path, cancel)
+	})
 }

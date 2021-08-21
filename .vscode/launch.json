@@ -12,7 +12,9 @@
             "program": "${workspaceFolder}",
             // "envFile": "${workspaceFolder}/.env",
             "args": [
-                "start"
+                "start",
+                "--user-dictionary",
+                "sample/sumou.txt"
             ],
         }
     ]

@@ -1,6 +1,9 @@
 package storage
 
-import "github.com/blugelabs/bluge"
+import (
+	"github.com/blugelabs/bluge"
+	"github.com/n-creativesystem/docsearch/analyzer"
+)
 
 type MatchQuery struct {
 	*bluge.MatchQuery
@@ -17,7 +20,7 @@ func (q *MatchQuery) Build() bluge.Query {
 }
 
 func (q *MatchQuery) SetAnalyzer(name string) *MatchQuery {
-	v := GetAnalyzer(name)
+	v := analyzer.GetAnalyzer(name)
 	if v != nil {
 		q.MatchQuery.SetAnalyzer(v)
 	}

@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/n-creativesystem/docsearch/protobuf"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -17,8 +17,7 @@ type GRPCClient struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	conn   *grpc.ClientConn
-	client protobuf.IndexClient
-	logger *logrus.Logger
+	client protobuf.DocsearchClient
 }
 
 func NewGRPCClient(grpcAddress string) (*GRPCClient, error) {
@@ -61,7 +60,7 @@ func NewGRPCClientWithContextTLS(grpcAddress string, baseCtx context.Context, ce
 		ctx:    ctx,
 		cancel: cancel,
 		conn:   conn,
-		client: protobuf.NewIndexClient(conn),
+		client: protobuf.NewDocsearchClient(conn),
 	}, nil
 }
 
@@ -107,39 +106,71 @@ func (c *GRPCClient) Cluster(opts ...grpc.CallOption) (*protobuf.ClusterResponse
 	}
 }
 
-func (c *GRPCClient) Upload(req *protobuf.Documents, opts ...grpc.CallOption) (*protobuf.BatchResponse, error) {
+func (c *GRPCClient) Upload(req *protobuf.Documents, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	if resp, err := c.client.Upload(c.ctx, req, opts...); err != nil {
 		return nil, err
 	} else {
 		return resp, nil
 	}
 }
-func (c *GRPCClient) BulkDelete(req *protobuf.DeleteDocuments, opts ...grpc.CallOption) (*protobuf.BatchResponse, error) {
+
+func (c *GRPCClient) BulkDelete(req *protobuf.DeleteDocuments, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	if resp, err := c.client.BulkDelete(c.ctx, req, opts...); err != nil {
 		return nil, err
 	} else {
 		return resp, nil
 	}
-
 }
-func (c *GRPCClient) Delete(req *protobuf.DeleteDocument, opts ...grpc.CallOption) (*protobuf.BatchResponse, error) {
+
+func (c *GRPCClient) Delete(req *protobuf.DeleteDocument, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	if resp, err := c.client.Delete(c.ctx, req, opts...); err != nil {
 		return nil, err
 	} else {
 		return resp, nil
 	}
-
 }
+
 func (c *GRPCClient) Search(req *protobuf.SearchRequest, opts ...grpc.CallOption) (*protobuf.SearchResponse, error) {
 	if resp, err := c.client.Search(c.ctx, req, opts...); err != nil {
 		return nil, err
 	} else {
 		return resp, nil
 	}
-
 }
-func (c *GRPCClient) Watch(opts ...grpc.CallOption) (protobuf.Index_WatchClient, error) {
+
+func (c *GRPCClient) Watch(opts ...grpc.CallOption) (protobuf.Docsearch_WatchClient, error) {
 	if resp, err := c.client.Watch(c.ctx, &emptypb.Empty{}, opts...); err != nil {
+		return nil, err
+	} else {
+		return resp, nil
+	}
+}
+
+func (c *GRPCClient) LivenessCheck(opts ...grpc.CallOption) (*protobuf.LivenessCheckResponse, error) {
+	if resp, err := c.client.LivenessCheck(c.ctx, &empty.Empty{}, opts...); err != nil {
+		return nil, err
+	} else {
+		return resp, nil
+	}
+}
+
+func (c *GRPCClient) ReadinessCheck(opts ...grpc.CallOption) (*protobuf.ReadinessCheckResponse, error) {
+	if resp, err := c.client.ReadinessCheck(c.ctx, &empty.Empty{}, opts...); err != nil {
+		return nil, err
+	} else {
+		return resp, nil
+	}
+}
+
+func (c *GRPCClient) UploadDictionary(in *protobuf.UserDictionaryRecords, opts ...grpc.CallOption) (*protobuf.DictionaryResponse, error) {
+	if resp, err := c.client.UploadDictionary(c.ctx, in, opts...); err != nil {
+		return nil, err
+	} else {
+		return resp, nil
+	}
+}
+func (c *GRPCClient) DeleteDictionary(in *protobuf.DeleteDictionaryRequest, opts ...grpc.CallOption) (*protobuf.DictionaryResponse, error) {
+	if resp, err := c.client.DeleteDictionary(c.ctx, in, opts...); err != nil {
 		return nil, err
 	} else {
 		return resp, nil

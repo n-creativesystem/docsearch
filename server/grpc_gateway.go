@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/n-creativesystem/docsearch/logger"
 	"github.com/n-creativesystem/docsearch/marshaler"
 	"github.com/n-creativesystem/docsearch/protobuf"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -24,6 +25,26 @@ func responseFilter(ctx context.Context, w http.ResponseWriter, resp proto.Messa
 	}
 
 	return nil
+}
+
+const (
+	XTenantID  = "X-Tenant-ID"
+	XIndexKey  = "X-Index-Key"
+	XRequestID = "X-Request-ID"
+)
+
+func withMetadata(ctx context.Context, req *http.Request) metadata.MD {
+	f := func(key, default_ string) string {
+		if v := req.Header.Get(key); v != "" {
+			return v
+		}
+		return default_
+	}
+	return metadata.New(map[string]string{
+		XTenantID:  f(XTenantID, "default"),
+		XIndexKey:  f(XIndexKey, "index"),
+		XRequestID: req.Header.Get(XRequestID),
+	})
 }
 
 type GRPCGateway struct {
@@ -37,10 +58,11 @@ type GRPCGateway struct {
 	certFile string
 	keyFile  string
 
-	logger *logrus.Logger
+	logger logger.DefaultLogger
 }
 
-func NewGRPCGateway(httpAddress string, grpcAddress string, certFile string, keyFile string, commonName string, logger *logrus.Logger) (*GRPCGateway, error) {
+func NewGRPCGateway(httpAddress string, grpcAddress string, certFile string, keyFile string, commonName string, logger logger.DefaultLogger) (*GRPCGateway, error) {
+	var err error
 	dialOpts := []grpc.DialOption{
 		grpc.WithDefaultCallOptions(
 			grpc.MaxCallSendMsgSize(math.MaxInt64),
@@ -57,8 +79,14 @@ func NewGRPCGateway(httpAddress string, grpcAddress string, certFile string, key
 
 	baseCtx := context.TODO()
 	ctx, cancel := context.WithCancel(baseCtx)
+	defer func() {
+		if err != nil {
+			cancel()
+		}
+	}()
 
 	mux := runtime.NewServeMux(
+		runtime.WithMetadata(withMetadata),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, new(marshaler.GatewayMarshaler)),
 		runtime.WithForwardResponseOption(responseFilter),
 	)
@@ -66,20 +94,21 @@ func NewGRPCGateway(httpAddress string, grpcAddress string, certFile string, key
 	if certFile == "" {
 		dialOpts = append(dialOpts, grpc.WithInsecure())
 	} else {
-		creds, err := credentials.NewClientTLSFromFile(certFile, commonName)
+		var creds credentials.TransportCredentials
+		creds, err = credentials.NewClientTLSFromFile(certFile, commonName)
 		if err != nil {
 			return nil, err
 		}
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
 	}
 
-	err := protobuf.RegisterIndexHandlerFromEndpoint(ctx, mux, grpcAddress, dialOpts)
+	err = protobuf.RegisterDocsearchHandlerFromEndpoint(ctx, mux, grpcAddress, dialOpts)
 	if err != nil {
 		logger.Error("failed to register KVS handler from endpoint", err)
 		return nil, err
 	}
-
-	listener, err := net.Listen("tcp", httpAddress)
+	var listener net.Listener
+	listener, err = net.Listen("tcp", httpAddress)
 	if err != nil {
 		logger.Error("failed to create index service", err)
 		return nil, err
@@ -108,7 +137,7 @@ func (s *GRPCGateway) Start() error {
 		}()
 	}
 
-	s.logger.Info("gRPC gateway started", s.httpAddress)
+	s.logger.Infof("gRPC gatewayを開始しました: %s", s.httpAddress)
 	return nil
 }
 
@@ -117,9 +146,10 @@ func (s *GRPCGateway) Stop() error {
 
 	err := s.listener.Close()
 	if err != nil {
-		s.logger.Error("failed to close listener", s.listener.Addr().String(), err)
+		s.logger.Errorf("gRPCリスナーのクローズに失敗しました[address: %s]: %s", s.listener.Addr().String(), err)
+		return err
 	}
 
-	s.logger.Info("gRPC gateway stopped", s.httpAddress)
+	s.logger.Infof("gRPC gatewayを停止しました: %s", s.httpAddress)
 	return nil
 }

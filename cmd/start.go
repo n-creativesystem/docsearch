@@ -8,7 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/n-creativesystem/docsearch/analyzer"
 	"github.com/n-creativesystem/docsearch/client"
+	"github.com/n-creativesystem/docsearch/config"
+	"github.com/n-creativesystem/docsearch/helper"
 	"github.com/n-creativesystem/docsearch/protobuf"
 	"github.com/n-creativesystem/docsearch/server"
 	"github.com/sirupsen/logrus"
@@ -28,28 +31,38 @@ var (
 			httpAddress = viper.GetString("http_address")
 			dataDirectory = viper.GetString("data_directory")
 			peerGrpcAddress = viper.GetString("peer_grpc_address")
-			certFile = viper.GetString("cert_file")
+			certificateFile = viper.GetString("certificate_file")
 			keyFile = viper.GetString("key_file")
 			commonName = viper.GetString("common_name")
+			logFile = viper.GetString("log_file")
 			logLevel = viper.GetString("log_level")
-			// logrusLevel, err := logrus.ParseLevel(logLevel)
-			// if err != nil {
-			// 	logrusLevel = logrus.DebugLevel
-			// }
-			logger := logrus.New()
-			logger.SetLevel(logrus.DebugLevel)
+			logFormat = viper.GetString("log_format")
+			userDictionaries = viper.GetStringSlice("user_dictionary")
+
+			appConfig := config.New(config.WithNodeId(id), config.WithDirectory(dataDirectory))
+			for _, dict := range userDictionaries {
+				key := helper.GetFileNameWithoutExt(dict)
+				if a, err := analyzer.UserDictionaryIsFile(dict); err != nil {
+					return err
+				} else {
+					analyzer.Register(key, a)
+				}
+			}
+			logrusLevel, err := logrus.ParseLevel(logLevel)
+			if err != nil {
+				logrusLevel = logrus.DebugLevel
+			}
+			logger := newLogger(logFormat, logrusLevel, logFile)
 			bootstrap := peerGrpcAddress == "" || peerGrpcAddress == grpcAddress
-			raftServer, err := server.NewRaftServer(id, raftAddress, dataDirectory, bootstrap, logger)
+			raftServer, err := server.NewRaftServer(appConfig, raftAddress, bootstrap, logger)
 			if err != nil {
 				return err
 			}
-
-			grpcServer, err := server.NewGRPCServerWithTLS(grpcAddress, raftServer, certFile, keyFile, commonName, logger)
+			grpcServer, err := server.NewGRPCServerWithTLS(grpcAddress, raftServer, certificateFile, keyFile, commonName, logger)
 			if err != nil {
 				return err
 			}
-
-			grpcGateway, err := server.NewGRPCGateway(httpAddress, grpcAddress, certFile, keyFile, commonName, logger)
+			grpcGateway, err := server.NewGRPCGateway(httpAddress, grpcAddress, certificateFile, keyFile, commonName, logger)
 			if err != nil {
 				return err
 			}
@@ -67,7 +80,6 @@ var (
 				return err
 			}
 
-			// wait for detect leader if it's bootstrap
 			if bootstrap {
 				timeout := 60 * time.Second
 				if err := raftServer.WaitForDetectLeader(timeout); err != nil {
@@ -75,7 +87,6 @@ var (
 				}
 			}
 
-			// create gRPC client for joining node
 			var joinGrpcAddress string
 			if bootstrap {
 				joinGrpcAddress = grpcAddress
@@ -83,7 +94,7 @@ var (
 				joinGrpcAddress = peerGrpcAddress
 			}
 
-			c, err := client.NewGRPCClientWithContextTLS(joinGrpcAddress, context.Background(), certFile, commonName)
+			c, err := client.NewGRPCClientWithContextTLS(joinGrpcAddress, context.Background(), certificateFile, commonName)
 			if err != nil {
 				return err
 			}
@@ -103,9 +114,11 @@ var (
 				},
 			}
 			if err = c.Join(joinRequest); err != nil {
-				return err
+				if !bootstrap {
+					return err
+				}
 			}
-
+			logger.Info("docserach start")
 			// wait for receiving signal
 			<-quitCh
 
@@ -120,34 +133,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(startCmd)
-
-	cobra.OnInitialize(func() {
-		if configFile != "" {
-			viper.SetConfigFile(configFile)
-		} else {
-			home, err := os.UserHomeDir()
-			if err != nil {
-				_, _ = fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-			viper.AddConfigPath("/etc")
-			viper.AddConfigPath(home)
-			viper.SetConfigName("docsearch")
-		}
-
-		viper.SetEnvPrefix("docsearch")
-		viper.AutomaticEnv()
-
-		if err := viper.ReadInConfig(); err != nil {
-			switch err.(type) {
-			case viper.ConfigFileNotFoundError:
-				// config file does not found in search path
-			default:
-				_, _ = fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-		}
-	})
+	cobra.OnInitialize(initialize(nil, nil))
 	allLogLevel := make([]string, len(logrus.AllLevels))
 	for i, level := range logrus.AllLevels {
 		allLogLevel[i] = level.String()
@@ -159,10 +145,13 @@ func init() {
 	startCmd.PersistentFlags().StringVar(&httpAddress, "http-address", "127.0.0.1:8000", "HTTP server listen address")
 	startCmd.PersistentFlags().StringVar(&dataDirectory, "data-directory", "data/docsearch", "data directory which store the index and Raft logs")
 	startCmd.PersistentFlags().StringVar(&peerGrpcAddress, "peer-grpc-address", "", "listen address of the existing gRPC server in the joining cluster")
-	startCmd.PersistentFlags().StringVar(&certFile, "cert-file", "", "path to the client server TLS certificate file")
+	startCmd.PersistentFlags().StringVar(&certificateFile, "certificate-file", "", "path to the client server TLS certificate file")
 	startCmd.PersistentFlags().StringVar(&keyFile, "key-file", "", "path to the client server TLS key file")
 	startCmd.PersistentFlags().StringVar(&commonName, "common-name", "", "certificate common name")
+	startCmd.PersistentFlags().StringVar(&logFile, "log-file", "/dev/stdout", "log file name")
 	startCmd.PersistentFlags().StringVar(&logLevel, "log-level", "DEBUG", fmt.Sprintf("log level[%s]", strings.Join(allLogLevel, ",")))
+	startCmd.PersistentFlags().StringVar(&logFormat, "log-format", "json", "output log format")
+	startCmd.PersistentFlags().StringArrayVar(&userDictionaries, "user-dictionary", nil, "")
 
 	_ = viper.BindPFlag("id", startCmd.PersistentFlags().Lookup("id"))
 	_ = viper.BindPFlag("raft_address", startCmd.PersistentFlags().Lookup("raft-address"))
@@ -170,8 +159,11 @@ func init() {
 	_ = viper.BindPFlag("http_address", startCmd.PersistentFlags().Lookup("http-address"))
 	_ = viper.BindPFlag("data_directory", startCmd.PersistentFlags().Lookup("data-directory"))
 	_ = viper.BindPFlag("peer_grpc_address", startCmd.PersistentFlags().Lookup("peer-grpc-address"))
-	_ = viper.BindPFlag("cert_file", startCmd.PersistentFlags().Lookup("certificate-file"))
+	_ = viper.BindPFlag("certificate_file", startCmd.PersistentFlags().Lookup("certificate-file"))
 	_ = viper.BindPFlag("key_file", startCmd.PersistentFlags().Lookup("key-file"))
 	_ = viper.BindPFlag("common_name", startCmd.PersistentFlags().Lookup("common-name"))
+	_ = viper.BindPFlag("log_file", startCmd.PersistentFlags().Lookup("log-file"))
 	_ = viper.BindPFlag("log_level", startCmd.PersistentFlags().Lookup("log-level"))
+	_ = viper.BindPFlag("log_format", startCmd.PersistentFlags().Lookup("log-format"))
+	_ = viper.BindPFlag("user_dictionary", startCmd.PersistentFlags().Lookup("user-dictionary"))
 }

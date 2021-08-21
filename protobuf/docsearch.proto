@@ -1,0 +1,247 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+package docsearch;
+
+option go_package = "./protobuf";
+
+service Docsearch {
+
+    rpc LivenessCheck (google.protobuf.Empty) returns (LivenessCheckResponse) {
+        option (google.api.http) = {
+            get: "/v1/liveness_check"
+        };
+    }
+
+    rpc ReadinessCheck (google.protobuf.Empty) returns (ReadinessCheckResponse) {
+        option (google.api.http) = {
+            get: "/v1/readiness_check"
+        };
+    }
+
+    rpc Node (google.protobuf.Empty) returns (NodeResponse) {
+        option (google.api.http) = {
+            get: "/v1/node"
+        };
+    }
+
+    rpc Join (JoinRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v1/cluster/{id}"
+            body: "node"
+        };
+    }
+
+    rpc Leave (LeaveRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/cluster/{id}"
+        };
+    }
+
+    rpc Cluster (google.protobuf.Empty) returns (ClusterResponse) {
+        option (google.api.http) = {
+            get: "/v1/cluster"
+        };
+    }
+
+    rpc Insert (Document) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v1/documents/{id=**}"
+            body: "*"
+        };
+    }
+
+    rpc Delete (DeleteDocument) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/documents/{id=**}"
+        };
+    }
+
+    rpc Upload (Documents) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/v1/documents"
+            body: "*"
+        };
+    }
+
+    rpc BulkDelete (DeleteDocuments) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/documents"
+            body: "*"
+        };
+    }
+
+    rpc Search (SearchRequest) returns (SearchResponse) {
+        option (google.api.http) = {
+            get: "/v1/search"
+            // post: "/v1/search"
+            // body: "*"
+        };
+    }
+
+    rpc UploadDictionary (UserDictionaryRecords) returns (DictionaryResponse) {
+        option (google.api.http) = {
+            put: "/v1/dictionaries/{id=**}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteDictionary (DeleteDictionaryRequest) returns (DictionaryResponse) {
+        option (google.api.http) = {
+            delete: "/v1/dictionaries/{id=**}"
+        };
+    }
+
+    rpc Watch (google.protobuf.Empty) returns (stream WatchResponse) {}
+
+    rpc Metrics (google.protobuf.Empty) returns (MetricsResponse) {
+        option (google.api.http) = {
+            get: "/v1/metrics"
+        };
+    }
+}
+
+message LivenessCheckResponse {
+    bool alive = 1;
+}
+
+message ReadinessCheckResponse {
+    bool ready = 1;
+}
+
+message Metadata {
+    string grpc_address = 1;
+    string http_address = 2;
+}
+
+message Node {
+    string raft_address = 1;
+    Metadata metadata = 2;
+    string state = 3;
+}
+
+message NodeResponse {
+    Node node = 1;
+}
+
+message JoinRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+    Node node = 2;
+}
+
+message LeaveRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+message Cluster {
+    map<string, Node> nodes = 1;
+    string leader = 2;
+}
+
+message ClusterResponse {
+    Cluster cluster = 1;
+}
+
+message Document {
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+    bytes fields = 2;
+}
+
+message Documents {
+    repeated Document requests = 1 [(validate.rules).repeated.min_items = 1];
+}
+
+message DeleteDocument {
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+message DeleteDocuments {
+    repeated DeleteDocument requests = 1 [(validate.rules).repeated.min_items = 1];
+}
+
+message Query {
+    string value = 1 [(validate.rules).string = {min_len: 1}];
+    string fields = 2 [(validate.rules).string = {min_len: 1}];
+    string analyzerName = 3;
+}
+
+message TermQuery {
+    string field = 1;
+    string value = 2;
+}
+
+message SearchRequest {
+    Query query = 1 [(validate.rules).message.required = true];
+    repeated TermQuery termQuery = 2;
+    int64 page = 3;
+    bool bleveFormat = 4;
+}
+
+message SearchResponse {
+    bytes result = 1;
+}
+
+message UserDictionaryRecord {
+    string text = 1 [(validate.rules).string = {min_len: 1}]; // 覚えさせたい文言
+    repeated string tokens = 2 [(validate.rules).repeated.min_items = 1]; // 単語別のトークン
+    repeated string yomi = 3 [(validate.rules).repeated.min_items = 1]; // 読み
+    string pos = 4 [(validate.rules).string = {min_len: 1}]; // 品詞
+}
+
+message UserDictionaryRecords {
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+    repeated UserDictionaryRecord records = 2 [(validate.rules).repeated.min_items = 1];
+}
+
+message DictionaryResponse {
+    bool results = 1;
+}
+
+message DeleteDictionaryRequest {
+    string id = 1 [(validate.rules).string = {min_len: 1}];
+}
+
+message DeleteDictionaries {
+    repeated DeleteDictionaryRequest requests = 1 [(validate.rules).repeated.min_items = 1];
+}
+
+message Event {
+    enum Type {
+        Unknown = 0;
+        JoinNode = 1;
+        LeaveNode = 2;
+        GetNode = 3;
+        Upload = 4;
+        Delete = 5;
+        Search = 6;
+        Dictionary = 7;
+        RemoveDictionary = 8;
+    }
+    Type type = 1;
+    google.protobuf.Any data = 2;
+}
+
+message WatchResponse {
+    Event event = 1;
+}
+
+message GetMetadataRequest {
+    string id = 1;
+}
+
+message SetMetadataRequest {
+    string id = 1;
+    Metadata metadata = 2;
+}
+
+message DeleteMetadataRequest {
+    string id = 1;
+}
+
+message MetricsResponse {
+    bytes metrics = 1;
+}

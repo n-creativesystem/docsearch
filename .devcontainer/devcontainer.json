@@ -1,9 +1,9 @@
 {
-    "name": "raft-test-dev",
+    "name": "docsearch-dev",
     "dockerComposeFile": [
         "../docker-compose.yaml"
     ],
-    "service": "raft-test-dev",
+    "service": "docsearch-dev",
     "workspaceFolder": "/src",
     "settings": {
         "terminal.integrated.shell.linux": null

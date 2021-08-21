@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"math"
 	"net"
 	"time"
@@ -9,10 +8,12 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	"github.com/n-creativesystem/docsearch/logger"
+	"github.com/n-creativesystem/docsearch/metric/prometheus"
 	"github.com/n-creativesystem/docsearch/protobuf"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 )
@@ -25,19 +26,14 @@ type GRPCServer struct {
 	certFile    string
 	keyFile     string
 	commonName  string
-	logger      *logrus.Logger
+	logger      logger.DefaultLogger
 }
 
-func recoveryFunc(p interface{}) error {
-	fmt.Printf("p: %+v\n", p)
-	return grpc.Errorf(codes.Internal, "Unexpected error")
-}
-
-func NewGrpcServer(grpcAddress string, raftServer *RaftServer, logger *logrus.Logger) (*GRPCServer, error) {
+func NewGrpcServer(grpcAddress string, raftServer *RaftServer, logger logger.LogrusLogger) (*GRPCServer, error) {
 	return NewGRPCServerWithTLS(grpcAddress, raftServer, "", "", "", logger)
 }
 
-func NewGRPCServerWithTLS(grpcAddress string, raftServer *RaftServer, certificateFile string, keyFile string, commonName string, logger *logrus.Logger) (*GRPCServer, error) {
+func NewGRPCServerWithTLS(grpcAddress string, raftServer *RaftServer, certificateFile string, keyFile string, commonName string, logger logger.LogrusLogger) (*GRPCServer, error) {
 	opts := []grpc.ServerOption{
 		grpc.MaxRecvMsgSize(math.MaxInt64),
 		grpc.MaxSendMsgSize(math.MaxInt64),
@@ -46,8 +42,10 @@ func NewGRPCServerWithTLS(grpcAddress string, raftServer *RaftServer, certificat
 				grpc_recovery.StreamServerInterceptor(
 					grpc_recovery.WithRecoveryHandler(recoveryFunc),
 				),
+				prometheus.StreamServerInterceptor(),
+				grpc_validator.StreamServerInterceptor(),
 				// metric.GrpcMetrics.StreamServerInterceptor(),
-				grpc_logrus.StreamServerInterceptor(logrus.NewEntry(logger)),
+				grpc_logrus.StreamServerInterceptor(logrus.NewEntry(logger.Logrus())),
 			),
 		),
 		grpc.UnaryInterceptor(
@@ -55,8 +53,10 @@ func NewGRPCServerWithTLS(grpcAddress string, raftServer *RaftServer, certificat
 				grpc_recovery.UnaryServerInterceptor(
 					grpc_recovery.WithRecoveryHandler(recoveryFunc),
 				),
+				prometheus.UnaryServerInterceptor(),
+				grpc_validator.UnaryServerInterceptor(),
 				// metric.GrpcMetrics.UnaryServerInterceptor(),
-				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger)),
+				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger.Logrus())),
 			),
 		),
 		grpc.KeepaliveParams(
@@ -84,14 +84,18 @@ func NewGRPCServerWithTLS(grpcAddress string, raftServer *RaftServer, certificat
 	server := grpc.NewServer(
 		opts...,
 	)
-
-	service, err := NewGRPCService(raftServer, certificateFile, commonName, logger)
+	sericeOpts := []Option{
+		WithRaftServer(raftServer),
+		WithCertificate(certificateFile, commonName),
+		WithLogger(logger),
+	}
+	service, err := NewGRPCService(sericeOpts...)
 	if err != nil {
 		logger.Error("failed to create key value store service: %s", err.Error())
 		return nil, err
 	}
 
-	protobuf.RegisterIndexServer(server, service)
+	protobuf.RegisterDocsearchServer(server, service)
 	// Initialize all metrics.
 	// metric.GrpcMetrics.InitializeMetrics(server)
 	// grpc_prometheus.Register(server)
@@ -127,9 +131,9 @@ func (s *GRPCServer) Start() error {
 
 func (s *GRPCServer) Stop() error {
 	if err := s.service.Stop(); err != nil {
-		s.logger.Errorf("GRPCServiceの停止に失敗しました: %s", err.Error())
+		s.logger.Errorf("GRPCServiceの停止に失敗しました[address: %s]: %s", err.Error())
 	}
 	s.server.Stop()
-	s.logger.Infof("gRPC serverを停止しました: [address:%s]", s.grpcAddress)
+	s.logger.Infof("gRPC serverを停止しました: %s", s.grpcAddress)
 	return nil
 }

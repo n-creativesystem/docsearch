@@ -52,4 +52,5 @@ var (
 	NotFound          = New("存在しません")
 	NodeDoesNotExist  = New("ノードが存在しません")
 	Nil               = New("data is nil")
+	NodeNotReady      = New("ノードの準備が出来ていません")
 )
