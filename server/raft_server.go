@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	raftbadgerdb "github.com/BBVA/raft-badger"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/hashicorp/raft"
 	"github.com/n-creativesystem/docsearch/config"
@@ -31,6 +32,7 @@ type RaftServer struct {
 	fsm           *fsm.RaftFSM
 	transport     *raft.NetworkTransport
 	logger        logger.LogrusLogger
+	raftStore     *raftbadgerdb.BadgerStore
 
 	watchClusterStopCh chan struct{}
 	watchClusterDoneCh chan struct{}
@@ -82,19 +84,13 @@ func (s *RaftServer) Start() error {
 		s.logger.Errorf("スナップショットストアのインスタンス生成に失敗しました: %s", err.Error())
 		return err
 	}
-	logStorePath := filepath.Join(s.dataDirectory, "raft", "log")
-	raftLogStore, err := badgerdb.New(logStorePath)
+	raftStorePath := filepath.Join(s.dataDirectory, "raft")
+	s.raftStore, err = badgerdb.New(raftStorePath)
 	if err != nil {
 		s.logger.Errorf("log store badgerDB error: %s", err.Error())
 		return err
 	}
-	stableStorePath := filepath.Join(s.dataDirectory, "raft", "stable")
-	raftStableStore, err := badgerdb.New(stableStorePath)
-	if err != nil {
-		s.logger.Errorf("stable store dadgerDB error: %s", err.Error())
-		return err
-	}
-	s.raft, err = raft.NewRaft(config, s.fsm, raftLogStore, raftStableStore, snapshotStore, s.transport)
+	s.raft, err = raft.NewRaft(config, s.fsm, s.raftStore, s.raftStore, snapshotStore, s.transport)
 	if err != nil {
 		s.logger.Errorf("Raftインスタンスの生成に失敗しました: %s", err.Error())
 		return err
@@ -178,6 +174,10 @@ func (s *RaftServer) Stop() error {
 	if future := s.raft.Shutdown(); future.Error() != nil {
 		err := future.Error()
 		s.logger.Errorf("Raftのシャットダウンに失敗しました: %s", err.Error())
+	}
+
+	if s.raftStore != nil {
+		s.raftStore.Close()
 	}
 	s.logger.Info("Raftがシャットダウンされました: %s", s.raftAddress)
 	return nil
