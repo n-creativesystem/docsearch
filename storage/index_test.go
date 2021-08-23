@@ -79,9 +79,10 @@ func TestCrud(t *testing.T) {
 	docs := testDocuments()
 	err = index.Update(docs)
 	assert.NoError(t, err)
-	match := bluge.NewMatchQuery("ゼリー").SetField("content")
+	match := bluge.NewMatchAllQuery()
+	// match := bluge.NewMatchQuery("ゼリー").SetField("content")
 	filter := []bluge.Query{
-		bluge.NewTermQuery("example1").SetField("type"),
+		// bluge.NewTermQuery("example1").SetField("type"),
 	}
 	q := bluge.NewBooleanQuery().AddMust(match).AddMust(filter...)
 	request := bluge.NewTopNSearch(10, q).WithStandardAggregations().ExplainScores()
@@ -165,7 +166,6 @@ func testDocuments() []*bluge.Document {
 		doc.AddField(bluge.NewTextField("title", data.Title).WithAnalyzer(ja.Analyzer()).StoreValue())
 		doc.AddField(bluge.NewTextField("content", data.Content).WithAnalyzer(ja.Analyzer()).StoreValue())
 		doc.AddField(bluge.NewTextField("author", data.Author).WithAnalyzer(ja.Analyzer()).StoreValue())
-		doc.AddField(bluge.NewTextField("type", data.Type).StoreValue())
 		docs[i] = doc
 	}
 	return docs

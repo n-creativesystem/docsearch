@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"encoding/json"
+	"io"
 	"reflect"
 	"testing"
 
@@ -66,7 +67,11 @@ func (i *mockIndex) BulkDelete(ids []string) error {
 	return nil
 }
 
-func (i *mockIndex) Snapshot(path string, cancel chan struct{}) error {
+func (i *mockIndex) Snapshot(writer io.Writer, id string, cancel chan struct{}) error {
+	return nil
+}
+
+func (i *mockIndex) Restore(rc io.ReadCloser) error {
 	return nil
 }
 

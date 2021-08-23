@@ -256,7 +256,6 @@ func (s *GRPCService) Upload(ctx context.Context, req *protobuf.Documents) (*emp
 		}
 	}
 	if err := s.raftServer.Upload(req); err != nil {
-		// s.logger.Error("failed to index documents in bulk", zap.Error(err))
 		return resp, status.Error(codes.Internal, err.Error())
 	}
 	return resp, nil

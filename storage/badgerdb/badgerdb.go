@@ -2,14 +2,12 @@ package badgerdb
 
 import (
 	"os"
-	"path/filepath"
 
 	raftbadgerdb "github.com/BBVA/raft-badger"
 	"github.com/dgraph-io/badger/v3"
 )
 
-func New(rootDirectory string) (*raftbadgerdb.BadgerStore, error) {
-	path := filepath.Join(rootDirectory, "raft_log_stable")
+func New(path string) (*raftbadgerdb.BadgerStore, error) {
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
 		return nil, err

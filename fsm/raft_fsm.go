@@ -231,6 +231,7 @@ func (f *RaftFSM) deleteMetadata(id string) error {
 
 // Snapshot is 未実装
 func (f *RaftFSM) Snapshot() (raft.FSMSnapshot, error) {
+	f.logger.Info("Snapshot")
 	return &FSMSnapshot{
 		index:  f.documentFunctions.index,
 		logger: f.logger,
@@ -239,6 +240,8 @@ func (f *RaftFSM) Snapshot() (raft.FSMSnapshot, error) {
 
 // Restore is 未実装
 func (f *RaftFSM) Restore(rc io.ReadCloser) error {
+	f.logger.Info("Restore")
+	// return f.documentFunctions.index.Restore(rc)
 	return nil
 }
 

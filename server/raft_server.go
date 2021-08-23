@@ -26,7 +26,7 @@ import (
 type RaftServer struct {
 	nodeID        string
 	raftAddress   string
-	dataDirectory string
+	rootDirectory string
 	bootstrap     bool
 	raft          *raft.Raft
 	fsm           *fsm.RaftFSM
@@ -49,7 +49,7 @@ func NewRaftServer(conf *config.AppConfig, raftAddress string, bootstrap bool, l
 	return &RaftServer{
 		nodeID:             conf.GetNodeID(),
 		raftAddress:        raftAddress,
-		dataDirectory:      conf.GetDocSearchIndexDirectory(),
+		rootDirectory:      conf.GetRootDirectory(),
 		bootstrap:          bootstrap,
 		logger:             log,
 		fsm:                fsm,
@@ -69,6 +69,7 @@ func (s *RaftServer) Start() error {
 	config.Logger = adapter.NewHcLogAdapter(s.logger, "docsearch")
 	config.LocalID = raft.ServerID(s.nodeID)
 	config.SnapshotThreshold = 1024
+	raftDirectory := filepath.Join(s.rootDirectory, "raft")
 	addr, err := net.ResolveTCPAddr("tcp", s.raftAddress)
 	if err != nil {
 		s.logger.Errorf("resolver tcp address error: %s", err.Error())
@@ -79,13 +80,13 @@ func (s *RaftServer) Start() error {
 		s.logger.Errorf("TCP Transportのインスタンス生成に失敗しました: %s", err.Error())
 		return err
 	}
-	snapshotStore, err := raft.NewFileSnapshotStore(s.dataDirectory, 2, io.Discard)
+	snapshotStore, err := raft.NewFileSnapshotStore(raftDirectory, 2, io.Discard)
 	if err != nil {
 		s.logger.Errorf("スナップショットストアのインスタンス生成に失敗しました: %s", err.Error())
 		return err
 	}
-	raftStorePath := filepath.Join(s.dataDirectory, "raft")
-	s.raftStore, err = badgerdb.New(raftStorePath)
+	logStablePath := filepath.Join(raftDirectory, "log_stable")
+	s.raftStore, err = badgerdb.New(logStablePath)
 	if err != nil {
 		s.logger.Errorf("log store badgerDB error: %s", err.Error())
 		return err
@@ -351,7 +352,7 @@ func (s *RaftServer) Nodes() (map[string]*protobuf.Node, error) {
 	if err := cf.Error(); err != nil {
 		s.logger.Error(errors.RaftConfigration(err))
 	}
-	nodes := make(map[string]*protobuf.Node, 0)
+	nodes := make(map[string]*protobuf.Node)
 	for _, server := range cf.Configuration().Servers {
 		metadata, _ := s.getMetadata(string(server.ID))
 		nodes[string(server.ID)] = &protobuf.Node{
@@ -380,13 +381,11 @@ func (s *RaftServer) getMetadata(id string) (*protobuf.Metadata, error) {
 
 	msg, err := proto.Marshal(event)
 	if err != nil {
-		// s.logger.Error("failed to marshal the command into the bytes as message", zap.String("id", id), zap.Any("metadata", metadata), zap.Error(err))
 		return nil, err
 	}
 
 	timeout := 60 * time.Second
 	if future := s.raft.Apply(msg, timeout); future.Error() != nil {
-		// s.logger.Error("failed to apply message bytes", zap.Duration("timeout", timeout), zap.Error(future.Error()))
 		return nil, future.Error()
 	} else {
 		future.Response()
@@ -437,13 +436,11 @@ func (s *RaftServer) setMetadata(id string, metadata *protobuf.Metadata) error {
 
 	msg, err := proto.Marshal(event)
 	if err != nil {
-		// s.logger.Error("failed to marshal the command into the bytes as message", zap.String("id", id), zap.Any("metadata", metadata), zap.Error(err))
 		return err
 	}
 
 	timeout := 60 * time.Second
 	if future := s.raft.Apply(msg, timeout); future.Error() != nil {
-		// s.logger.Error("failed to apply message bytes", zap.Duration("timeout", timeout), zap.Error(future.Error()))
 		return future.Error()
 	}
 	return nil
@@ -482,7 +479,6 @@ func (s *RaftServer) deleteMetadata(id string) error {
 
 	dataAny := &any.Any{}
 	if err := utils.UnmarshalAny(data, dataAny); err != nil {
-		// s.logger.Error("failed to unmarshal request to the command data", zap.String("id", id), zap.Error(err))
 		return err
 	}
 
@@ -493,13 +489,11 @@ func (s *RaftServer) deleteMetadata(id string) error {
 
 	msg, err := proto.Marshal(event)
 	if err != nil {
-		// s.logger.Error("failed to marshal the command into the bytes as the message", zap.String("id", id), zap.Error(err))
 		return err
 	}
 
 	timeout := 60 * time.Second
 	if future := s.raft.Apply(msg, timeout); future.Error() != nil {
-		// s.logger.Error("failed to apply message bytes", zap.Duration("timeout", timeout), zap.Error(future.Error()))
 		return future.Error()
 	}
 

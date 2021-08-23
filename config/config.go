@@ -24,7 +24,7 @@ func (conf *AppConfig) GetRootDirectory() string {
 }
 
 func (conf *AppConfig) GetDocSearchIndexDirectory() string {
-	return filepath.Join(conf.GetRootDirectory(), "docsearch_index")
+	return filepath.Join(conf.GetRootDirectory(), "index")
 }
 
 func (conf *AppConfig) GetDictionaryDB() DictionaryDB {

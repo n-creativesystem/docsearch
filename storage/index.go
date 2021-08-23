@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"io"
 	"log"
 	"math"
 
@@ -17,13 +18,15 @@ type Index interface {
 	Update(documents []*bluge.Document) error
 	Delete(id string) error
 	BulkDelete(ids []string) error
-	Snapshot(path string, cancel chan struct{}) error
+	Snapshot(writer io.Writer, id string) error
+	Restore(rc io.ReadCloser) error
 }
 
 type store struct {
-	config bluge.Config
-	writer *bluge.Writer
-	logger logger.DefaultLogger
+	directory string
+	config    bluge.Config
+	writer    *bluge.Writer
+	logger    logger.DefaultLogger
 }
 
 func New(directory string, logger logger.WriteLogger) (Index, error) {
@@ -34,9 +37,10 @@ func New(directory string, logger logger.WriteLogger) (Index, error) {
 		return nil, err
 	}
 	return &store{
-		config: config,
-		writer: writer,
-		logger: logger,
+		directory: directory,
+		config:    config,
+		writer:    writer,
+		logger:    logger,
 	}, nil
 }
 
@@ -151,8 +155,35 @@ func (s *store) BulkDelete(ids []string) error {
 	return s.writer.Batch(batch)
 }
 
-func (s *store) Snapshot(path string, cancel chan struct{}) error {
-	return s.reader(func(reader *bluge.Reader) error {
-		return reader.Backup(path, cancel)
-	})
+func (s *store) Snapshot(writer io.Writer, id string) error {
+	// snapShotPath := filepath.Join(s.directory, "snapshot", id)
+	// return s.reader(func(reader *bluge.Reader) error {
+	// 	return reader.Backup(snapShotPath, nil)
+	// })
+	// inMemory := index.NewInMemoryDirectory()
+	// reader, _ := index.OpenReader(index.DefaultConfigWithDirectory(func() index.Directory {
+	// 	return inMemory
+	// }))
+	// if err := reader.Backup(inMemory, nil); err != nil {
+	// 	return err
+	// }
+	// if ids, err := inMemory.List(index.ItemKindSegment); err != nil {
+	// 	return err
+	// } else {
+	// 	for _, id := range ids {
+	// 		data, _, _ := inMemory.Load(index.ItemKindSegment, id)
+	// 		if data != nil {
+	// 			if _, err := data.WriteTo(writer); err != nil {
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
+	return nil
+}
+
+func (s *store) Restore(rc io.ReadCloser) error {
+	// buf, _ := io.ReadAll(rc)
+	// s.logger.Info(string(buf))
+	return nil
 }
