@@ -711,6 +711,13 @@ func (m *Document) Validate() error {
 		return nil
 	}
 
+	if utf8.RuneCountInString(m.GetTenant()) < 1 {
+		return DocumentValidationError{
+			field:  "Tenant",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
 	if utf8.RuneCountInString(m.GetId()) < 1 {
 		return DocumentValidationError{
 			field:  "Id",
@@ -782,6 +789,13 @@ var _ interface {
 func (m *Documents) Validate() error {
 	if m == nil {
 		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetTenant()) < 1 {
+		return DocumentsValidationError{
+			field:  "Tenant",
+			reason: "value length must be at least 1 runes",
+		}
 	}
 
 	if len(m.GetRequests()) < 1 {
@@ -878,6 +892,13 @@ func (m *DeleteDocument) Validate() error {
 		}
 	}
 
+	if utf8.RuneCountInString(m.GetTenant()) < 1 {
+		return DeleteDocumentValidationError{
+			field:  "Tenant",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
 	return nil
 }
 
@@ -941,6 +962,13 @@ var _ interface {
 func (m *DeleteDocuments) Validate() error {
 	if m == nil {
 		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetTenant()) < 1 {
+		return DeleteDocumentsValidationError{
+			field:  "Tenant",
+			reason: "value length must be at least 1 runes",
+		}
 	}
 
 	if len(m.GetRequests()) < 1 {
@@ -1022,35 +1050,39 @@ var _ interface {
 	ErrorName() string
 } = DeleteDocumentsValidationError{}
 
-// Validate checks the field values on Query with the rules defined in the
+// Validate checks the field values on MatchQuery with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
-func (m *Query) Validate() error {
+func (m *MatchQuery) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetValue()) < 1 {
-		return QueryValidationError{
-			field:  "Value",
+	if utf8.RuneCountInString(m.GetMatch()) < 1 {
+		return MatchQueryValidationError{
+			field:  "Match",
 			reason: "value length must be at least 1 runes",
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetFields()) < 1 {
-		return QueryValidationError{
-			field:  "Fields",
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return MatchQueryValidationError{
+			field:  "Field",
 			reason: "value length must be at least 1 runes",
 		}
 	}
 
 	// no validation rules for AnalyzerName
 
+	// no validation rules for Boost
+
+	// no validation rules for Operator
+
 	return nil
 }
 
-// QueryValidationError is the validation error returned by Query.Validate if
-// the designated constraints aren't met.
-type QueryValidationError struct {
+// MatchQueryValidationError is the validation error returned by
+// MatchQuery.Validate if the designated constraints aren't met.
+type MatchQueryValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -1058,22 +1090,22 @@ type QueryValidationError struct {
 }
 
 // Field function returns field value.
-func (e QueryValidationError) Field() string { return e.field }
+func (e MatchQueryValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e QueryValidationError) Reason() string { return e.reason }
+func (e MatchQueryValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e QueryValidationError) Cause() error { return e.cause }
+func (e MatchQueryValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e QueryValidationError) Key() bool { return e.key }
+func (e MatchQueryValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e QueryValidationError) ErrorName() string { return "QueryValidationError" }
+func (e MatchQueryValidationError) ErrorName() string { return "MatchQueryValidationError" }
 
 // Error satisfies the builtin error interface
-func (e QueryValidationError) Error() string {
+func (e MatchQueryValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -1085,14 +1117,14 @@ func (e QueryValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sQuery.%s: %s%s",
+		"invalid %sMatchQuery.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = QueryValidationError{}
+var _ error = MatchQueryValidationError{}
 
 var _ interface {
 	Field() string
@@ -1100,7 +1132,471 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = QueryValidationError{}
+} = MatchQueryValidationError{}
+
+// Validate checks the field values on MatchAllQuery with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *MatchAllQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// MatchAllQueryValidationError is the validation error returned by
+// MatchAllQuery.Validate if the designated constraints aren't met.
+type MatchAllQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MatchAllQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MatchAllQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MatchAllQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MatchAllQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MatchAllQueryValidationError) ErrorName() string { return "MatchAllQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MatchAllQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMatchAllQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MatchAllQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MatchAllQueryValidationError{}
+
+// Validate checks the field values on MatchNoneQuery with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *MatchNoneQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// MatchNoneQueryValidationError is the validation error returned by
+// MatchNoneQuery.Validate if the designated constraints aren't met.
+type MatchNoneQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MatchNoneQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MatchNoneQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MatchNoneQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MatchNoneQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MatchNoneQueryValidationError) ErrorName() string { return "MatchNoneQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MatchNoneQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMatchNoneQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MatchNoneQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MatchNoneQueryValidationError{}
+
+// Validate checks the field values on MatchPhraseQuery with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *MatchPhraseQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetMatchPhrase()) < 1 {
+		return MatchPhraseQueryValidationError{
+			field:  "MatchPhrase",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return MatchPhraseQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for AnalyzerName
+
+	// no validation rules for Boost
+
+	// no validation rules for Slop
+
+	return nil
+}
+
+// MatchPhraseQueryValidationError is the validation error returned by
+// MatchPhraseQuery.Validate if the designated constraints aren't met.
+type MatchPhraseQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MatchPhraseQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MatchPhraseQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MatchPhraseQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MatchPhraseQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MatchPhraseQueryValidationError) ErrorName() string { return "MatchPhraseQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MatchPhraseQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMatchPhraseQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MatchPhraseQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MatchPhraseQueryValidationError{}
+
+// Validate checks the field values on MultiPhraseQuery with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *MultiPhraseQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if len(m.GetTerms()) < 1 {
+		return MultiPhraseQueryValidationError{
+			field:  "Terms",
+			reason: "value must contain at least 1 item(s)",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return MultiPhraseQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	// no validation rules for Slop
+
+	return nil
+}
+
+// MultiPhraseQueryValidationError is the validation error returned by
+// MultiPhraseQuery.Validate if the designated constraints aren't met.
+type MultiPhraseQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e MultiPhraseQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e MultiPhraseQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e MultiPhraseQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e MultiPhraseQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e MultiPhraseQueryValidationError) ErrorName() string { return "MultiPhraseQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e MultiPhraseQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sMultiPhraseQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = MultiPhraseQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = MultiPhraseQueryValidationError{}
+
+// Validate checks the field values on PrefixQuery with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *PrefixQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetPrefix()) < 1 {
+		return PrefixQueryValidationError{
+			field:  "Prefix",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return PrefixQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// PrefixQueryValidationError is the validation error returned by
+// PrefixQuery.Validate if the designated constraints aren't met.
+type PrefixQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PrefixQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PrefixQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PrefixQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PrefixQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PrefixQueryValidationError) ErrorName() string { return "PrefixQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PrefixQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPrefixQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PrefixQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PrefixQueryValidationError{}
+
+// Validate checks the field values on RegexpQuery with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *RegexpQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetRegexp()) < 1 {
+		return RegexpQueryValidationError{
+			field:  "Regexp",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return RegexpQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// RegexpQueryValidationError is the validation error returned by
+// RegexpQuery.Validate if the designated constraints aren't met.
+type RegexpQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e RegexpQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e RegexpQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e RegexpQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e RegexpQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e RegexpQueryValidationError) ErrorName() string { return "RegexpQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e RegexpQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sRegexpQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = RegexpQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = RegexpQueryValidationError{}
 
 // Validate checks the field values on TermQuery with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
@@ -1109,9 +1605,21 @@ func (m *TermQuery) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Field
+	if utf8.RuneCountInString(m.GetTerm()) < 1 {
+		return TermQueryValidationError{
+			field:  "Term",
+			reason: "value length must be at least 1 runes",
+		}
+	}
 
-	// no validation rules for Value
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return TermQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
 
 	return nil
 }
@@ -1170,38 +1678,101 @@ var _ interface {
 	ErrorName() string
 } = TermQueryValidationError{}
 
-// Validate checks the field values on SearchRequest with the rules defined in
+// Validate checks the field values on TermRangeQuery with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
 // is returned.
-func (m *SearchRequest) Validate() error {
+func (m *TermRangeQuery) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	if m.GetQuery() == nil {
-		return SearchRequestValidationError{
-			field:  "Query",
-			reason: "value is required",
+	// no validation rules for Min
+
+	// no validation rules for Max
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return TermRangeQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
 		}
 	}
 
-	if v, ok := interface{}(m.GetQuery()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SearchRequestValidationError{
-				field:  "Query",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+	// no validation rules for Boost
+
+	return nil
+}
+
+// TermRangeQueryValidationError is the validation error returned by
+// TermRangeQuery.Validate if the designated constraints aren't met.
+type TermRangeQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e TermRangeQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e TermRangeQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e TermRangeQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e TermRangeQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e TermRangeQueryValidationError) ErrorName() string { return "TermRangeQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e TermRangeQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
 	}
 
-	for idx, item := range m.GetTermQuery() {
-		_, _ = idx, item
+	key := ""
+	if e.key {
+		key = "key for "
+	}
 
-		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+	return fmt.Sprintf(
+		"invalid %sTermRangeQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = TermRangeQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = TermRangeQueryValidationError{}
+
+// Validate checks the field values on BooleanQuery with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *BooleanQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	for key, val := range m.GetMusts() {
+		_ = val
+
+		// no validation rules for Musts[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
-				return SearchRequestValidationError{
-					field:  fmt.Sprintf("TermQuery[%v]", idx),
+				return BooleanQueryValidationError{
+					field:  fmt.Sprintf("Musts[%v]", key),
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
@@ -1210,9 +1781,1151 @@ func (m *SearchRequest) Validate() error {
 
 	}
 
-	// no validation rules for Page
+	for key, val := range m.GetShoulds() {
+		_ = val
 
-	// no validation rules for BleveFormat
+		// no validation rules for Shoulds[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return BooleanQueryValidationError{
+					field:  fmt.Sprintf("Shoulds[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	for key, val := range m.GetMustNots() {
+		_ = val
+
+		// no validation rules for MustNots[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return BooleanQueryValidationError{
+					field:  fmt.Sprintf("MustNots[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	// no validation rules for Boost
+
+	// no validation rules for MinShould
+
+	return nil
+}
+
+// BooleanQueryValidationError is the validation error returned by
+// BooleanQuery.Validate if the designated constraints aren't met.
+type BooleanQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e BooleanQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e BooleanQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e BooleanQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e BooleanQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e BooleanQueryValidationError) ErrorName() string { return "BooleanQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e BooleanQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sBooleanQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = BooleanQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = BooleanQueryValidationError{}
+
+// Validate checks the field values on DateRangeQuery with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *DateRangeQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Start
+
+	// no validation rules for End
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return DateRangeQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// DateRangeQueryValidationError is the validation error returned by
+// DateRangeQuery.Validate if the designated constraints aren't met.
+type DateRangeQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DateRangeQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DateRangeQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DateRangeQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DateRangeQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DateRangeQueryValidationError) ErrorName() string { return "DateRangeQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DateRangeQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDateRangeQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DateRangeQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DateRangeQueryValidationError{}
+
+// Validate checks the field values on GeoBoundingBoxQuery with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *GeoBoundingBoxQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for TopLeftLon
+
+	// no validation rules for TopLeftLat
+
+	// no validation rules for BottomRightLon
+
+	// no validation rules for BottomRightLat
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return GeoBoundingBoxQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// GeoBoundingBoxQueryValidationError is the validation error returned by
+// GeoBoundingBoxQuery.Validate if the designated constraints aren't met.
+type GeoBoundingBoxQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GeoBoundingBoxQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GeoBoundingBoxQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GeoBoundingBoxQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GeoBoundingBoxQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GeoBoundingBoxQueryValidationError) ErrorName() string {
+	return "GeoBoundingBoxQueryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GeoBoundingBoxQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGeoBoundingBoxQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GeoBoundingBoxQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GeoBoundingBoxQueryValidationError{}
+
+// Validate checks the field values on GeoPoint with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *GeoPoint) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Lon
+
+	// no validation rules for Lat
+
+	return nil
+}
+
+// GeoPointValidationError is the validation error returned by
+// GeoPoint.Validate if the designated constraints aren't met.
+type GeoPointValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GeoPointValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GeoPointValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GeoPointValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GeoPointValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GeoPointValidationError) ErrorName() string { return "GeoPointValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GeoPointValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGeoPoint.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GeoPointValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GeoPointValidationError{}
+
+// Validate checks the field values on GeoDistanceQuery with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *GeoDistanceQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if m.GetPoint() == nil {
+		return GeoDistanceQueryValidationError{
+			field:  "Point",
+			reason: "value is required",
+		}
+	}
+
+	if v, ok := interface{}(m.GetPoint()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return GeoDistanceQueryValidationError{
+				field:  "Point",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	// no validation rules for Distance
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return GeoDistanceQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// GeoDistanceQueryValidationError is the validation error returned by
+// GeoDistanceQuery.Validate if the designated constraints aren't met.
+type GeoDistanceQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GeoDistanceQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GeoDistanceQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GeoDistanceQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GeoDistanceQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GeoDistanceQueryValidationError) ErrorName() string { return "GeoDistanceQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e GeoDistanceQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGeoDistanceQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GeoDistanceQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GeoDistanceQueryValidationError{}
+
+// Validate checks the field values on GeoBoundingPolygonQuery with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *GeoBoundingPolygonQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if len(m.GetPoints()) < 1 {
+		return GeoBoundingPolygonQueryValidationError{
+			field:  "Points",
+			reason: "value must contain at least 1 item(s)",
+		}
+	}
+
+	for idx, item := range m.GetPoints() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GeoBoundingPolygonQueryValidationError{
+					field:  fmt.Sprintf("Points[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return GeoBoundingPolygonQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// GeoBoundingPolygonQueryValidationError is the validation error returned by
+// GeoBoundingPolygonQuery.Validate if the designated constraints aren't met.
+type GeoBoundingPolygonQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GeoBoundingPolygonQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GeoBoundingPolygonQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GeoBoundingPolygonQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GeoBoundingPolygonQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GeoBoundingPolygonQueryValidationError) ErrorName() string {
+	return "GeoBoundingPolygonQueryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GeoBoundingPolygonQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGeoBoundingPolygonQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GeoBoundingPolygonQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GeoBoundingPolygonQueryValidationError{}
+
+// Validate checks the field values on NumericRangeQuery with the rules defined
+// in the proto definition for this message. If any rules are violated, an
+// error is returned.
+func (m *NumericRangeQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Min
+
+	// no validation rules for Max
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return NumericRangeQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// NumericRangeQueryValidationError is the validation error returned by
+// NumericRangeQuery.Validate if the designated constraints aren't met.
+type NumericRangeQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e NumericRangeQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e NumericRangeQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e NumericRangeQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e NumericRangeQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e NumericRangeQueryValidationError) ErrorName() string {
+	return "NumericRangeQueryValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e NumericRangeQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sNumericRangeQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = NumericRangeQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = NumericRangeQueryValidationError{}
+
+// Validate checks the field values on WildcardQuery with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *WildcardQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetWildcard()) < 1 {
+		return WildcardQueryValidationError{
+			field:  "Wildcard",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return WildcardQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// WildcardQueryValidationError is the validation error returned by
+// WildcardQuery.Validate if the designated constraints aren't met.
+type WildcardQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e WildcardQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e WildcardQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e WildcardQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e WildcardQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e WildcardQueryValidationError) ErrorName() string { return "WildcardQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e WildcardQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sWildcardQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = WildcardQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = WildcardQueryValidationError{}
+
+// Validate checks the field values on FuzzyQuery with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *FuzzyQuery) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if utf8.RuneCountInString(m.GetTerm()) < 1 {
+		return FuzzyQueryValidationError{
+			field:  "Term",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Prefix
+
+	// no validation rules for Fuzziness
+
+	if utf8.RuneCountInString(m.GetField()) < 1 {
+		return FuzzyQueryValidationError{
+			field:  "Field",
+			reason: "value length must be at least 1 runes",
+		}
+	}
+
+	// no validation rules for Boost
+
+	return nil
+}
+
+// FuzzyQueryValidationError is the validation error returned by
+// FuzzyQuery.Validate if the designated constraints aren't met.
+type FuzzyQueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e FuzzyQueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e FuzzyQueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e FuzzyQueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e FuzzyQueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e FuzzyQueryValidationError) ErrorName() string { return "FuzzyQueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e FuzzyQueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sFuzzyQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = FuzzyQueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = FuzzyQueryValidationError{}
+
+// Validate checks the field values on Query with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Query) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	switch m.Query.(type) {
+
+	case *Query_MatchAll:
+
+		if v, ok := interface{}(m.GetMatchAll()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "MatchAll",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_MatchQuery:
+
+		if v, ok := interface{}(m.GetMatchQuery()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "MatchQuery",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_MatchNone:
+
+		if v, ok := interface{}(m.GetMatchNone()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "MatchNone",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_MatchPhrase:
+
+		if v, ok := interface{}(m.GetMatchPhrase()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "MatchPhrase",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_MultiPhrase:
+
+		if v, ok := interface{}(m.GetMultiPhrase()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "MultiPhrase",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_Prefix:
+
+		if v, ok := interface{}(m.GetPrefix()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "Prefix",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_Regexp:
+
+		if v, ok := interface{}(m.GetRegexp()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "Regexp",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_Term:
+
+		if v, ok := interface{}(m.GetTerm()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "Term",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_TermRange:
+
+		if v, ok := interface{}(m.GetTermRange()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "TermRange",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_Bool:
+
+		if v, ok := interface{}(m.GetBool()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "Bool",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_DateRange:
+
+		if v, ok := interface{}(m.GetDateRange()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "DateRange",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_GeoBoundingBox:
+
+		if v, ok := interface{}(m.GetGeoBoundingBox()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "GeoBoundingBox",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_GeoDistance:
+
+		if v, ok := interface{}(m.GetGeoDistance()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "GeoDistance",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_GeoBoundingPolygon:
+
+		if v, ok := interface{}(m.GetGeoBoundingPolygon()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "GeoBoundingPolygon",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_NumericRange:
+
+		if v, ok := interface{}(m.GetNumericRange()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "NumericRange",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_Wildcard:
+
+		if v, ok := interface{}(m.GetWildcard()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "Wildcard",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Query_Fuzzy:
+
+		if v, ok := interface{}(m.GetFuzzy()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return QueryValidationError{
+					field:  "Fuzzy",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// QueryValidationError is the validation error returned by Query.Validate if
+// the designated constraints aren't met.
+type QueryValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueryValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueryValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueryValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueryValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueryValidationError) ErrorName() string { return "QueryValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QueryValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQuery.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueryValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueryValidationError{}
+
+// Validate checks the field values on SearchMetadataRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, an error is returned.
+func (m *SearchMetadataRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for From
+
+	// no validation rules for Size
+
+	return nil
+}
+
+// SearchMetadataRequestValidationError is the validation error returned by
+// SearchMetadataRequest.Validate if the designated constraints aren't met.
+type SearchMetadataRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SearchMetadataRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SearchMetadataRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SearchMetadataRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SearchMetadataRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SearchMetadataRequestValidationError) ErrorName() string {
+	return "SearchMetadataRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SearchMetadataRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSearchMetadataRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SearchMetadataRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SearchMetadataRequestValidationError{}
+
+// Validate checks the field values on SearchRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *SearchRequest) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	if v, ok := interface{}(m.GetMetadata()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SearchRequestValidationError{
+				field:  "Metadata",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	for key, val := range m.GetQuery() {
+		_ = val
+
+		// no validation rules for Query[key]
+
+		if v, ok := interface{}(val).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SearchRequestValidationError{
+					field:  fmt.Sprintf("Query[%v]", key),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if utf8.RuneCountInString(m.GetTenant()) < 1 {
+		return SearchRequestValidationError{
+			field:  "Tenant",
+			reason: "value length must be at least 1 runes",
+		}
+	}
 
 	return nil
 }
