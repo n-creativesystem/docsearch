@@ -7,7 +7,6 @@ require (
 	github.com/armon/go-metrics v0.3.9 // indirect
 	github.com/blugelabs/bluge v0.1.7
 	github.com/blugelabs/bluge_segment_api v0.2.0
-	github.com/blugelabs/query_string v0.1.0
 	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
 	github.com/fatih/color v1.12.0 // indirect
@@ -15,6 +14,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20190910122728-9d188e94fb99 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
@@ -30,7 +30,8 @@ require (
 	github.com/klauspost/compress v1.13.4 // indirect
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
-	github.com/n-creativesystem/docsearch/protobuf v0.0.0-00010101000000-000000000000
+	github.com/n-creativesystem/docsearch/client v1.0.0
+	github.com/n-creativesystem/docsearch/protobuf v1.0.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/common v0.30.0
@@ -51,4 +52,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )
 
-replace github.com/n-creativesystem/docsearch/protobuf => ./protobuf
+replace (
+	github.com/n-creativesystem/docsearch/client => ./client
+	github.com/n-creativesystem/docsearch/protobuf => ./protobuf
+)

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/any"
@@ -33,29 +32,14 @@ func (s *RaftServer) Upload(req *protobuf.Documents) error {
 
 // Search is ドキュメントの検索
 func (s *RaftServer) Search(req *protobuf.SearchRequest) (*protobuf.SearchResponse, error) {
-	dataAny := &any.Any{}
-	if err := utils.UnmarshalAny(req, dataAny); err != nil {
-		return nil, err
-	}
-	event := &protobuf.Event{
-		Type: protobuf.Event_Search,
-		Data: dataAny,
-	}
-	msg, err := proto.Marshal(event)
+	buf, err := s.fsm.Search(req)
 	if err != nil {
 		return nil, err
 	}
-	timeout := 60 * time.Second
-	if future := s.raft.Apply(msg, timeout); future.Error() != nil {
-		return nil, future.Error()
-	} else {
-		resp := future.Response()
-		buf, _ := json.Marshal(&resp)
-		res := &protobuf.SearchResponse{
-			Result: buf,
-		}
-		return res, nil
+	res := &protobuf.SearchResponse{
+		Result: buf,
 	}
+	return res, nil
 }
 
 // AddUserDictionary is ユーザー辞書の追加

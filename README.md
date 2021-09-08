@@ -75,3 +75,17 @@ APIで公開されているエンドポイントからユーザー辞書を登�
 | user-dictionary   | ユーザー辞書ファイル                                                                |
 
 ### Raft(分散合意アルゴリズム)
+
+
+## gRPC
+
+```sh
+go install \
+    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+    google.golang.org/protobuf/cmd/protoc-gen-go \
+    google.golang.org/grpc/cmd/protoc-gen-go-grpc \
+    github.com/envoyproxy/protoc-gen-validate
+
+make protoc
+```

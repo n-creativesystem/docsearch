@@ -63,8 +63,8 @@ func (m *GatewayMarshaler) Unmarshal(data []byte, v interface{}) error {
 		if err := json.Unmarshal(data, &docs); err != nil {
 			return err
 		}
-		value.Requests = make([]*protobuf.Document, len(docs))
-		for idx, d := range docs {
+		value.Requests = make([]*protobuf.Document, 0, len(docs))
+		for _, d := range docs {
 			docBytes, err := json.Marshal(&d)
 			if err != nil {
 				return err
@@ -73,7 +73,13 @@ func (m *GatewayMarshaler) Unmarshal(data []byte, v interface{}) error {
 			if err := m.Unmarshal(docBytes, doc); err != nil {
 				return err
 			}
-			value.Requests[idx] = doc
+			doc.Tenant = value.Tenant
+			value.Requests = append(value.Requests, doc)
+		}
+		return nil
+	case *protobuf.DeleteDocuments:
+		for _, doc := range value.Requests {
+			doc.Tenant = value.Tenant
 		}
 		return nil
 	// case *protobuf.SearchRequest:

@@ -2,11 +2,9 @@ package fsm
 
 import (
 	"encoding/json"
-	"fmt"
+	"path/filepath"
 
 	"github.com/blugelabs/bluge"
-	querystr "github.com/blugelabs/query_string"
-	"github.com/n-creativesystem/docsearch/analyzer"
 	"github.com/n-creativesystem/docsearch/helper"
 	"github.com/n-creativesystem/docsearch/logger"
 	"github.com/n-creativesystem/docsearch/model"
@@ -15,49 +13,51 @@ import (
 )
 
 type documentFunctions struct {
-	index  storage.Index
-	logger logger.DefaultLogger
+	// index  storage.Index
+	indexDirectory string
+	logger         logger.WriteLogger
 }
 
 // search is ドキュメント検索
 func (f *documentFunctions) search(req *protobuf.SearchRequest) (*storage.SearchResponse, error) {
 	// 全文検索する内容
-	var match bluge.Query
+	queries := make([]bluge.Query, 0, len(req.Query))
 	var err error
-	if req.BleveFormat {
-		match, err = querystr.ParseQueryString(req.Query.Value, querystr.DefaultOptions())
+	for field, value := range req.Query {
+		if q, err := helper.GetQuery(field, value); err != nil {
+			return nil, err
+		} else {
+			queries = append(queries, q)
+		}
+	}
+	var page int = 0
+	var size int = 0
+	if req.Metadata != nil {
+		page = int(req.Metadata.From)
+		size = int(req.Metadata.Size)
+	}
+	if page < 1 {
+		page = 1
+	}
+	if size < 1 {
+		size = 10
+	}
+	offset := (page - 1) * size
+	query := bluge.NewBooleanQuery().AddMust(queries...)
+	searchRequest := bluge.NewTopNSearch(size, query).WithStandardAggregations().SetFrom(offset).ExplainScores()
+	var resp *storage.SearchResponse
+	err = f.index(req.Tenant, func(index storage.Index) error {
+		var err error
+		resp, err = index.Search(searchRequest)
 		if err != nil {
-			return nil, fmt.Errorf("errror parsing query string '%s': %v", req.Query.Value, err)
+			return err
 		}
-	} else {
-		query := storage.NewMatchQuery(req.Query.Value).SetField(req.Query.Fields)
-		analyzer := analyzer.GetAnalyzer(req.Query.AnalyzerName)
-		if analyzer != nil {
-			query = query.SetAnalyzer(analyzer)
-		}
-		match = query
-	}
-	filter := []bluge.Query{
-		// tenant
-		// index
-		// type
-	}
-	for _, term := range req.TermQuery {
-		termFilter := helper.TermFunc(term.Field, term.Value)
-		filter = append(filter, termFilter)
-	}
-	if req.Page < 1 {
-		req.Page = 1
-	}
-	resultPerPage := 10
-	offset := (req.Page - 1) * int64(resultPerPage)
-	q := bluge.NewBooleanQuery().AddMust(match).AddMust(filter...)
-	searchRequest := bluge.NewTopNSearch(resultPerPage, q).WithStandardAggregations().SetFrom(int(offset)).ExplainScores()
-	resp, err := f.index.Search(searchRequest)
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	resp.Metadata.CalcPage(resultPerPage, req.Page)
+	resp.Metadata.CalcPage(size, page)
 	return resp, nil
 }
 
@@ -81,7 +81,9 @@ func (f *documentFunctions) update(value *protobuf.Documents) error {
 		}
 		docs = append(docs, doc)
 	}
-	return f.index.Update(docs)
+	return f.index(value.Tenant, func(index storage.Index) error {
+		return index.Update(docs)
+	})
 }
 
 func (f *documentFunctions) bulkDelete(req *protobuf.DeleteDocuments) error {
@@ -89,9 +91,20 @@ func (f *documentFunctions) bulkDelete(req *protobuf.DeleteDocuments) error {
 	for i, r := range req.Requests {
 		ids[i] = r.Id
 	}
-	return f.index.BulkDelete(ids)
+	return f.index(req.Tenant, func(index storage.Index) error {
+		return index.BulkDelete(ids)
+	})
 }
 
-func (f *documentFunctions) Close() error {
-	return f.index.Close()
+// func (f *documentFunctions) Close() error {
+// 	return f.index.Close()
+// }
+
+func (f *documentFunctions) index(tenant string, fn func(index storage.Index) error) error {
+	index, err := storage.New(filepath.Join(f.indexDirectory, tenant), f.logger)
+	if err != nil {
+		return err
+	}
+	defer index.Close()
+	return fn(index)
 }

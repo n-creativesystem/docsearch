@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/reflection"
 )
 
 type GRPCServer struct {
@@ -44,7 +45,6 @@ func NewGRPCServerWithTLS(grpcAddress string, raftServer *RaftServer, certificat
 				),
 				prometheus.StreamServerInterceptor(),
 				grpc_validator.StreamServerInterceptor(),
-				// metric.GrpcMetrics.StreamServerInterceptor(),
 				grpc_logrus.StreamServerInterceptor(logrus.NewEntry(logger.Logrus())),
 			),
 		),
@@ -55,7 +55,6 @@ func NewGRPCServerWithTLS(grpcAddress string, raftServer *RaftServer, certificat
 				),
 				prometheus.UnaryServerInterceptor(),
 				grpc_validator.UnaryServerInterceptor(),
-				// metric.GrpcMetrics.UnaryServerInterceptor(),
 				grpc_logrus.UnaryServerInterceptor(logrus.NewEntry(logger.Logrus())),
 			),
 		),
@@ -96,9 +95,7 @@ func NewGRPCServerWithTLS(grpcAddress string, raftServer *RaftServer, certificat
 	}
 
 	protobuf.RegisterDocsearchServer(server, service)
-	// Initialize all metrics.
-	// metric.GrpcMetrics.InitializeMetrics(server)
-	// grpc_prometheus.Register(server)
+	reflection.Register(server)
 
 	listener, err := net.Listen("tcp", grpcAddress)
 	if err != nil {

@@ -87,19 +87,6 @@ func NewGRPCService(opts ...Option) (*GRPCService, error) {
 	return service, nil
 }
 
-// func NewGRPCService(raftServer *RaftServer, certFile, commonName string, logger logger.LogrusLogger) (*GRPCService, error) {
-// 	return &GRPCService{
-// 		raftServer:         raftServer,
-// 		certFile:           certFile,
-// 		commonName:         commonName,
-// 		logger:             logger,
-// 		watchChans:         make(map[chan protobuf.WatchResponse]struct{}),
-// 		peerClients:        make(map[string]*client.GRPCClient, 0),
-// 		watchClusterStopCh: make(chan struct{}),
-// 		watchClusterDoneCh: make(chan struct{}),
-// 	}, nil
-// }
-
 func (s *GRPCService) LivenessCheck(ctx context.Context, in *emptypb.Empty) (*protobuf.LivenessCheckResponse, error) {
 	resp := &protobuf.LivenessCheckResponse{}
 	resp.Alive = true
@@ -231,20 +218,6 @@ func (s *GRPCService) Cluster(ctx context.Context, req *empty.Empty) (*protobuf.
 
 	return resp, nil
 }
-
-// func (s *GRPCService) Insert(ctx context.Context, req *protobuf.Document) (*emptypb.Empty, error) {
-// 	batchReq := &protobuf.Documents{
-// 		Requests: []*protobuf.Document{
-// 			req,
-// 		},
-// 	}
-// 	if _, err := s.Upload(ctx, batchReq); err != nil {
-// 		s.logger.Error(err)
-// 		return nil, err
-// 	} else {
-// 		return &emptypb.Empty{}, nil
-// 	}
-// }
 
 func (s *GRPCService) Upload(ctx context.Context, req *protobuf.Documents) (*emptypb.Empty, error) {
 	resp := &emptypb.Empty{}

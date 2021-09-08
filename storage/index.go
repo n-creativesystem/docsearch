@@ -64,14 +64,14 @@ type SearchResponse struct {
 }
 
 type Metadata struct {
-	NextPage     int64   `json:"next_page,omitempty"`
-	PreviousPage int64   `json:"previous_page,omitempty"`
+	NextPage     int     `json:"next_page,omitempty"`
+	PreviousPage int     `json:"previous_page,omitempty"`
 	TopScore     float64 `json:"top_score"`
 	Total        uint64  `json:"total"`
 }
 
-func (m *Metadata) CalcPage(searchSize int, nowPage int64) {
-	numPages := int64(math.Ceil(float64(m.Total) / float64(searchSize)))
+func (m *Metadata) CalcPage(searchSize int, nowPage int) {
+	numPages := int(math.Ceil(float64(m.Total) / float64(searchSize)))
 	if numPages > nowPage {
 		m.NextPage = nowPage + 1
 	}

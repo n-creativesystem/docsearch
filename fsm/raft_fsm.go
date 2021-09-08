@@ -34,31 +34,20 @@ type RaftFSM struct {
 var _ raft.FSM = (*RaftFSM)(nil)
 
 func NewRaftFSM(conf *config.AppConfig, logger logger.WriteLogger) (*RaftFSM, error) {
-	closeFlg := false
-	index, err := storage.New(conf.GetDocSearchIndexDirectory(), logger)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if closeFlg {
-			index.Close()
-		}
-	}()
 	var dictionaryStore dictionary.Factory
 	switch conf.GetDictionaryDB() {
 	default:
 		dictionaryStore = badger.New()
 	}
 	if err := dictionaryStore.Initialize(conf, logger); err != nil {
-		closeFlg = true
 		return nil, err
 	}
 	return &RaftFSM{
 		logger:   logger,
 		metadata: make(map[string]*protobuf.Metadata, 0),
 		documentFunctions: &documentFunctions{
-			index:  index,
-			logger: logger,
+			indexDirectory: conf.GetDocSearchIndexDirectory(),
+			logger:         logger,
 		},
 		ApplyCh:         make(chan *protobuf.Event, 1024),
 		dictionaryStore: dictionaryStore,
@@ -233,7 +222,7 @@ func (f *RaftFSM) deleteMetadata(id string) error {
 func (f *RaftFSM) Snapshot() (raft.FSMSnapshot, error) {
 	f.logger.Info("Snapshot")
 	return &FSMSnapshot{
-		index:  f.documentFunctions.index,
+		index:  nil,
 		logger: f.logger,
 	}, nil
 }
@@ -258,6 +247,14 @@ func (f *RaftFSM) getMetadata(id string) *protobuf.Metadata {
 // Close is 終了処理
 // ユーザー辞書DB、ドキュメントDBのClose
 func (f *RaftFSM) Close() error {
-	f.dictionaryStore.Close()
-	return f.documentFunctions.Close()
+	return f.dictionaryStore.Close()
+	// return f.documentFunctions.Close()
+}
+
+func (f *RaftFSM) Search(req *protobuf.SearchRequest) ([]byte, error) {
+	sr, err := f.documentFunctions.search(req)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(sr)
 }

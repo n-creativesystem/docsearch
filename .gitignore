@@ -20,3 +20,4 @@ docsearch
 /.VSCodeCounter
 /main_test.go
 .DS_Store
+/client/test

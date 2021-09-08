@@ -25,20 +25,6 @@ var (
 		Short: "全文検索サーバーを起動します",
 		Long:  "全文検索サーバーを起動します",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			id = viper.GetString("id")
-			raftAddress = viper.GetString("raft_address")
-			grpcAddress = viper.GetString("grpc_address")
-			httpAddress = viper.GetString("http_address")
-			dataDirectory = viper.GetString("data_directory")
-			peerGrpcAddress = viper.GetString("peer_grpc_address")
-			certificateFile = viper.GetString("certificate_file")
-			keyFile = viper.GetString("key_file")
-			commonName = viper.GetString("common_name")
-			logFile = viper.GetString("log_file")
-			logLevel = viper.GetString("log_level")
-			logFormat = viper.GetString("log_format")
-			userDictionaries = viper.GetStringSlice("user_dictionary")
-
 			appConfig := config.New(config.WithNodeId(id), config.WithDirectory(dataDirectory))
 			for _, dict := range userDictionaries {
 				key := helper.GetFileNameWithoutExt(dict)

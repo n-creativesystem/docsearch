@@ -26,3 +26,33 @@ func (q *MatchQuery) SetAnalyzer(name string) *MatchQuery {
 	}
 	return q
 }
+
+type MatchAllQuery struct {
+	*bluge.MatchAllQuery
+}
+
+func NewAll() *MatchAllQuery {
+	return &MatchAllQuery{
+		MatchAllQuery: bluge.NewMatchAllQuery(),
+	}
+}
+
+type Term struct {
+	*bluge.TermQuery
+}
+
+func NewTerm(field, value string) *Term {
+	return &Term{
+		TermQuery: bluge.NewTermQuery(value).SetField(field),
+	}
+}
+
+type WildCard struct {
+	*bluge.WildcardQuery
+}
+
+func NewWildCard(field, value string) *WildCard {
+	return &WildCard{
+		WildcardQuery: bluge.NewWildcardQuery(value).SetField(field),
+	}
+}

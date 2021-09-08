@@ -6,15 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
-)
-
-var (
-	jst = time.FixedZone("Asia/Tokyo", 9*60*60)
-)
-
-const (
-	ISO8601 = time.RFC3339Nano
 )
 
 // Str2bytes converts string("00 00 00 00 00 00 00 00") to []byte
@@ -99,18 +90,6 @@ func Interface2Float64(value interface{}) (float64, bool) {
 		return float64(v), true
 	}
 	return 0, false
-}
-
-func ParseISO8601(s string) (time.Time, error) {
-	return time.Parse(ISO8601, s)
-}
-
-func ParseISO8601InLocation(s string) (time.Time, error) {
-	return time.ParseInLocation(ISO8601, s, jst)
-}
-
-func FormatISO8601(t time.Time) string {
-	return t.Format(ISO8601)
 }
 
 func GetFileNameWithoutExt(path string) string {
