@@ -169,6 +169,7 @@ func (c *GRPCClient) UploadDictionary(in *protobuf.UserDictionaryRecords, opts .
 		return resp, nil
 	}
 }
+
 func (c *GRPCClient) DeleteDictionary(in *protobuf.DeleteDictionaryRequest, opts ...grpc.CallOption) (*protobuf.DictionaryResponse, error) {
 	if resp, err := c.client.DeleteDictionary(c.ctx, in, opts...); err != nil {
 		return nil, err
