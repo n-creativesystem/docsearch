@@ -3,7 +3,7 @@ ENV TZ=Asia/Tokyo
 WORKDIR /src/
 COPY protobuf protobuf
 COPY go.mod go.sum Makefile ./
-RUN apk update && apk add make git && go mod download
+RUN apk update && apk add make git
 COPY analyzer analyzer
 COPY client client
 COPY cmd cmd
