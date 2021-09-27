@@ -304,8 +304,9 @@ github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ikawaha/blugeplugin v1.3.3 h1:qhyy+KMf9T67OVxSjzzipMs9E0o5o+tbtieSrq59TRg=
 github.com/ikawaha/blugeplugin v1.3.3/go.mod h1:ck9Z5ZxyNeLrXG+oG41tYAxU/gyVJyp2MTR+ag3U5ak=
-github.com/ikawaha/kagome-dict v1.0.3 h1:x9i49EDy3tx7HPgQ9+l0AqTB5rEkKPoSTD6NyIe9nF8=
 github.com/ikawaha/kagome-dict v1.0.3/go.mod h1:8Ma5E21J2kyaak6KumYLWGLKxm1kaAkCCWKWnrc5o/o=
+github.com/ikawaha/kagome-dict v1.0.4 h1:sxRKBqQ5FiJKeQwhvUmtumFqCm+GvCYiKRVgA08OQ+w=
+github.com/ikawaha/kagome-dict v1.0.4/go.mod h1:s6LsRECNl13K4miPTTG3/n6Pt7v3ClQfohMbK7qitzo=
 github.com/ikawaha/kagome-dict/ipa v1.0.3 h1:jt2toGpRha7PPD5mqKEOabmAssichf1IwJykpstgN0s=
 github.com/ikawaha/kagome-dict/ipa v1.0.3/go.mod h1:zpMcAFSLDYEq+UI3GnF3IcZE5a0rKB2J0rrKGY6HYW8=
 github.com/ikawaha/kagome-dict/uni v1.1.2/go.mod h1:3rH19G7Fp+BQcRMv9GDwZzbXNkHttfcoOVdv9Pi+zyU=
