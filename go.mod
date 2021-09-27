@@ -17,7 +17,7 @@ require (
 	github.com/gopherjs/gopherjs v0.0.0-20190910122728-9d188e94fb99 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
 	github.com/hashicorp/go-hclog v0.16.2
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-msgpack v1.1.5 // indirect
