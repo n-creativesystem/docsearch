@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine as build
+FROM golang:1.18.4-alpine as build
 ENV TZ=Asia/Tokyo
 WORKDIR /src/
 COPY protobuf protobuf
