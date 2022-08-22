@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/raft v1.3.1
 	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/ikawaha/blugeplugin v1.3.3
-	github.com/ikawaha/kagome-dict v1.0.3
+	github.com/ikawaha/kagome-dict v1.0.5
 	github.com/ikawaha/kagome-dict/ipa v1.0.3
 	github.com/ikawaha/kagome/v2 v2.6.1
 	github.com/klauspost/compress v1.13.4 // indirect
