@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/BBVA/raft-badger v1.1.0
 	github.com/armon/go-metrics v0.3.9 // indirect
-	github.com/blugelabs/bluge v0.1.7
+	github.com/blugelabs/bluge v0.2.2
 	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/dgraph-io/badger/v3 v3.2103.1
 	github.com/envoyproxy/protoc-gen-validate v0.6.1
@@ -23,11 +23,10 @@ require (
 	github.com/hashicorp/go-msgpack v1.1.5 // indirect
 	github.com/hashicorp/raft v1.3.1
 	github.com/iancoleman/strcase v0.2.0 // indirect
-	github.com/ikawaha/blugeplugin v1.3.3
-	github.com/ikawaha/kagome-dict v1.0.3
-	github.com/ikawaha/kagome-dict/ipa v1.0.3
-	github.com/ikawaha/kagome/v2 v2.6.1
-	github.com/klauspost/compress v1.13.4 // indirect
+	github.com/ikawaha/blugeplugin v1.5.7
+	github.com/ikawaha/kagome-dict v1.0.6
+	github.com/ikawaha/kagome-dict/ipa v1.0.7
+	github.com/ikawaha/kagome/v2 v2.8.2
 	github.com/lyft/protoc-gen-star v0.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/n-creativesystem/docsearch/client v1.0.0
@@ -43,9 +42,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.0
-	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
-	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.3.8
 	google.golang.org/grpc v1.40.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
