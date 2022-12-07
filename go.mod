@@ -24,7 +24,7 @@ require (
 	github.com/hashicorp/raft v1.3.1
 	github.com/iancoleman/strcase v0.2.0 // indirect
 	github.com/ikawaha/blugeplugin v1.3.3
-	github.com/ikawaha/kagome-dict v1.0.3
+	github.com/ikawaha/kagome-dict v1.0.8
 	github.com/ikawaha/kagome-dict/ipa v1.0.3
 	github.com/ikawaha/kagome/v2 v2.6.1
 	github.com/klauspost/compress v1.13.4 // indirect
@@ -43,9 +43,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.19.0
-	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
-	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.5.0
 	google.golang.org/grpc v1.40.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
